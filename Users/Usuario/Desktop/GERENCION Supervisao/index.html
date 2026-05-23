@@ -1491,23 +1491,22 @@ tr:hover td{background:rgba(255,255,255,0.02);}
     }
   }
   function exportarDados(){
-    try{
-      salvar();
-      var payload=localStorage.getItem(KEY);
-      if(!payload){toast('Nenhum dado salvo para exportar.');return;}
-      if(navigator.clipboard&&navigator.clipboard.writeText){
-        navigator.clipboard.writeText(payload).then(function(){
-          toast('Dados copiados! Cole em Importar no novo link.');
+    try {
+        var dados = localStorage.getItem('GRC_V2');
+        if(!dados) { toast('Nenhum dado encontrado para exportar.'); return; }
+        
+        // Cria um link que já leva os dados compactados junto
+        var linkMagico = window.location.origin + window.location.pathname + '?backup=' + encodeURIComponent(dados);
+        
+        navigator.clipboard.writeText(linkMagico).then(function(){
+            toast('Link mágico copiado! Envie no WhatsApp do Tablet.');
         }).catch(function(){
-          window.prompt('Copie todo o texto (Ctrl+A, Ctrl+C):',payload);
-          toast('Copie o texto da janela.');
+            window.prompt('Copie o link abaixo:', linkMagico);
         });
-      }else{
-        window.prompt('Copie todo o texto (Ctrl+A, Ctrl+C):',payload);
-        toast('Copie o texto da janela.');
-      }
-    }catch(e){toast('Erro ao exportar.');}
-  }
+    } catch(e) {
+        toast('Erro ao exportar.');
+    }
+}
   function importarDados(){
     var texto = window.prompt('Cole aqui o backup exportado (JSON completo):');
     if(texto === null) return;
@@ -1522,6 +1521,21 @@ tr:hover td{background:rgba(255,255,255,0.02);}
         toast('Erro ao gravar os dados.');
     }
 }
+// Verifica se tem um backup vindo pela barra de endereço do navegador
+(function() {
+    var urlParams = new URLSearchParams(window.location.search);
+    var backupQuery = urlParams.get('backup');
+    if (backupQuery) {
+        try {
+            var dadosDecodificados = decodeURIComponent(backupQuery);
+            localStorage.setItem('GRC_V2', dadosDecodificados);
+            // Limpa a barra de endereço e recarrega limpo
+            window.location.href = window.location.origin + window.location.pathname;
+        } catch(e) {
+            console.error('Erro ao importar via link');
+        }
+    }
+})();
   
   function renderPos(){
     var el=document.getElementById('posBox');
